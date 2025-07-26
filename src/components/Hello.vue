@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useHello } from '../composables/useHello';
+import { useBooks } from '../composables/useBooks';
 
-const { hello, loadHello } = useHello();
+const { hello, loadHello } = useBooks();
 
 onMounted(async () => {
     loadHello(); // @todo do we need async
