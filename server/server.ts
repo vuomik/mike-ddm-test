@@ -1,9 +1,13 @@
+import 'reflect-metadata';
+import './di';
+
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import routes from './routes';
 import dotenv from 'dotenv';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -31,6 +35,8 @@ async function createServer() {
   app.use(express.json())
 
   app.use('/api', routes);
+
+  app.use(errorHandler);
 
   if (process.env.NODE_ENV === 'production') {
     const __filename = fileURLToPath(import.meta.url);

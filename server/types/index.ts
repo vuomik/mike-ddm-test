@@ -1,5 +1,3 @@
-// https://www.rfc-editor.org/rfc/rfc9457.html
-
 export interface Message {
     code?: string;
     text: string;

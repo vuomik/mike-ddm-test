@@ -1,11 +1,13 @@
-import { RequestHandler, Router } from 'express';
+import { Router } from 'express';
 import {
   searchBooks, getBook,
 } from '../controllers/booksController';
+import { authenticate } from '../middleware/authentication';
+import { authorize } from '../middleware/authorization';
 
 const router = Router();
 
-router.get('/', searchBooks as RequestHandler);
-router.get('/:id', getBook as RequestHandler);
+router.get('/', authenticate, authorize, searchBooks);
+router.get('/:id', authenticate, authorize, getBook);
 
 export default router;
