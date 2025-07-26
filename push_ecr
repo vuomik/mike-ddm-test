@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -euo pipefail
+
+./aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 719070646941.dkr.ecr.us-east-1.amazonaws.com
+
+# build and push image
+docker build -t 719070646941.dkr.ecr.us-east-1.amazonaws.com/dotdash-meredith-test-app --target=production .
+docker tag 719070646941.dkr.ecr.us-east-1.amazonaws.com/dotdash-meredith-test-app 719070646941.dkr.ecr.us-east-1.amazonaws.com/dotdash-meredith-test-app:latest
+docker push 719070646941.dkr.ecr.us-east-1.amazonaws.com/dotdash-meredith-test-app:latest

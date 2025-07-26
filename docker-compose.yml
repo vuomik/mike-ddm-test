@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    env_file: 
+      - ./.env
+    ports:
+      - 3002:3000
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: npm run dev
+
+  app-prod:
+    build:
+      context: .
+      target: production
+    env_file: .env.production
+    ports:
+      - "3080:3000"
+    environment:
+      NODE_ENV: production
+    command: npm run start

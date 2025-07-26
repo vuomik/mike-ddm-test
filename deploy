@@ -1,0 +1,62 @@
+#!/bin/sh
+
+STACK_NAME=dotdash-meredith-test-app
+REGION=us-east-1
+
+echo "Deploying CloudFormation stack..."
+aws cloudformation deploy \
+  --template-file fargate.yml \
+  --stack-name $STACK_NAME \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region $REGION
+
+echo "Waiting for stack creation to complete..."
+aws cloudformation wait stack-create-complete \
+  --stack-name $STACK_NAME \
+  --region $REGION
+
+echo "Fetching ECS cluster name..."
+CLUSTER_NAME=$(aws cloudformation describe-stack-resource \
+  --stack-name $STACK_NAME \
+  --logical-resource-id Cluster \
+  --region $REGION \
+  --query "StackResourceDetail.PhysicalResourceId" \
+  --output text)
+
+echo "Fetching ECS service name..."
+SERVICE_NAME=$(aws cloudformation describe-stack-resource \
+  --stack-name $STACK_NAME \
+  --logical-resource-id Service \
+  --region $REGION \
+  --query "StackResourceDetail.PhysicalResourceId" \
+  --output text)
+
+echo "Waiting for service to start a task..."
+aws ecs wait services-stable \
+  --cluster "$CLUSTER_NAME" \
+  --services "$SERVICE_NAME" \
+  --region $REGION
+
+echo "Getting running task..."
+TASK_ARN=$(aws ecs list-tasks \
+  --cluster "$CLUSTER_NAME" \
+  --service-name "$SERVICE_NAME" \
+  --region $REGION \
+  --query 'taskArns[0]' \
+  --output text)
+
+echo "Getting public IP..."
+ENI_ID=$(aws ecs describe-tasks \
+  --cluster "$CLUSTER_NAME" \
+  --tasks "$TASK_ARN" \
+  --region $REGION \
+  --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" \
+  --output text)
+
+PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+  --network-interface-ids "$ENI_ID" \
+  --region $REGION \
+  --query "NetworkInterfaces[0].Association.PublicIp" \
+  --output text)
+
+echo "Your app is running at: http://$PUBLIC_IP:3000"
