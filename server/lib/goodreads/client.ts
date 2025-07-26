@@ -1,8 +1,5 @@
 import axios, { AxiosInstance } from 'axios'; // Make sure to 'npm install axios'
 
-/**
- * Represents the configuration for the Goodreads API client.
- */
 interface ClientConfig { // Renamed from GoodreadsApiConfig to be more generic
     apiKey: string;
     baseUrl?: string; // Optional, defaults to Goodreads base URL
@@ -24,7 +21,6 @@ export class Client { // Renamed from GoodreadsApiClient to Client
 
         console.log(this);
 
-        // Create an Axios instance for this client
         this.axiosInstance = axios.create({
             baseURL: this.baseUrl,
             timeout: 10000, // 10 seconds timeout
@@ -71,11 +67,14 @@ export class Client { // Renamed from GoodreadsApiClient to Client
             };
 
             const response = await this.axiosInstance.get(url, { params });
-            return response.data; // Return the raw XML string
+            return response.data;
 
-        } catch (error: any) {
-            // Re-throw the error with a more specific message for the caller
-            throw new Error(`Failed to fetch search results from Goodreads API: ${error.message}`);
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw e;
+            } else {
+                throw new Error('Unknown error');
+            }
         }
     }
 

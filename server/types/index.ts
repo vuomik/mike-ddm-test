@@ -1,0 +1,23 @@
+// https://www.rfc-editor.org/rfc/rfc9457.html
+
+export interface Message {
+    code?: string;
+    text: string;
+}
+
+export interface Pagination {
+    perPage: number;
+    currentPage: number;
+    totalPages: number;
+}
+
+export interface ApiResponse<T> {
+    messages?: Message[],
+    pagination?: Pagination,
+    data?: T;
+}
+
+export interface PaginatedResult<T> {
+    pagination: Pagination;
+    result: T[];
+}

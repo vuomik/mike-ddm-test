@@ -1,5 +1,7 @@
 import { parseStringPromise } from 'xml2js';
 import { Client } from './client';
+import { calculatePagination } from '../../utils/pages';
+import { PaginatedResult } from '../../types';
 
 export interface Book {
     id: string;
@@ -29,35 +31,38 @@ export class Repository {
         }
     }
 
-    public async search(query: string, page: number = 1): Promise<Book[]> {
+    public async search(query: string, page: number = 1): Promise<PaginatedResult<Book>> {
         try {
-            // Fetch raw XML from the client
             const xmlResponse = await this.client.search(query, page);
-            // Parse the XML into a JavaScript object
             const parsedXml = await this.parseXml(xmlResponse);
-
-            // console.log('Parsed Goodreads Search XML:', JSON.stringify(parsedXml, null, 2)); // For debugging
-
             const searchResults = parsedXml.GoodreadsResponse.search.results;
+            const pagination = calculatePagination(
+                parseInt(parsedXml.GoodreadsResponse.search['results-start'], 10),
+                parseInt(parsedXml.GoodreadsResponse.search['results-end'], 10),
+                parseInt(parsedXml.GoodreadsResponse.search['total-results'], 10)
+            );
             const books: Book[] = [];
 
-            if (searchResults && searchResults.work) {
-                // Ensure 'work' is always an array, even if there's only one result
-                const works = Array.isArray(searchResults.work) ? searchResults.work : [searchResults.work];
-
-                works.forEach((work: any) => {
-                    if (work.best_book) {
-                        books.push({
-                            id: work.best_book.id,
-                            title: work.best_book.title,
-                            author: work.best_book.author.name,
-                            // Add more properties from 'work.best_book' or 'work' if available
-                            // publicationYear: parseInt(work.original_publication_year),
-                        });
-                    }
-                });
+            if (!searchResults || !searchResults.work) {
+                throw new Error('No search results found in Goodreads response.');
             }
-            return books;
+
+            // @todo typeguard?
+            const works = Array.isArray(searchResults.work) ? searchResults.work : [searchResults.work];
+
+            works.forEach((work: any) => {
+                if (work.best_book) {
+                    books.push({
+                        id: work.best_book.id,
+                        title: work.best_book.title,
+                        author: work.best_book.author.name,
+                        // Add more properties from 'work.best_book' or 'work' if available
+                        // publicationYear: parseInt(work.original_publication_year),
+                    });
+                }
+            });
+
+            return { pagination, result: books };
 
         } catch (error: any) {
             console.error('Error in Repository.search:', error.message);

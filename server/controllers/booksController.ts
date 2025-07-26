@@ -1,10 +1,7 @@
-// booksController.ts
-
 import { Request, Response } from 'express';
-// Adjust the import path based on your actual directory structure.
-// Assuming 'lib' is at the same level as 'controllers', and 'goodreads' is inside 'lib'.
 import { Repository, Book } from '../lib/goodreads/repository';
 import { Client } from '../lib/goodreads/client';
+import { ApiResponse } from '../types';
 
 // --- Dependency Instantiation ---
 // In a larger project, you would typically use a dependency injection container
@@ -33,28 +30,34 @@ const bookRepository = new Repository(goodreadsClient);
  * @param {Request} req - The Express request object.
  * @param {Response} res - The Express response object.
  */
-export const searchBooks = async (req: Request, res: Response) => {
+export const searchBooks = async (req: Request, res: Response<ApiResponse<Book[]>>) => {
     // Extract query parameters
     const query = req.query.q as string;
     const page = parseInt(req.query.page as string) || 1; // Default to page 1 if not provided
 
     // Basic input validation
+    // move validation to middleware
     if (!query) {
-        return res.status(400).json({ message: 'Search query (q) is required.' });
+        return res.status(400).json({ messages: [ { text: 'Search query (q) is required.' } ] } );
     }
     if (isNaN(page) || page < 1) {
-        return res.status(400).json({ message: 'Page must be a positive number.' });
+        return res.status(400).json({ messages: [ { text: 'Page must be a positive number.' } ] });
     }
 
     try {
         // Call the repository to perform the search and get parsed Book objects
-        const books: Book[] = await bookRepository.search(query, page);
-        res.status(200).json(books); // Send back the results as JSON
+        const { pagination, result } = await bookRepository.search(query, page);
+        const response = {
+            pagination,
+            data: result,
+        };
+        
+        res.status(200).json(response); // Send back the results as JSON
     } catch (error: any) {
         // Log the error for server-side debugging
         console.error('Error in searchBooks controller:', error.message);
         // Send a 500 Internal Server Error response to the client
-        res.status(500).json({ message: error.message || 'Internal server error fetching books.' });
+        res.status(500).json({ messages: [ { text: error.message || 'Internal server error fetching books.' }]});
     }
 };
 

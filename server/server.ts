@@ -7,6 +7,19 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+process.on('uncaughtException', (err, origin) => {
+  console.error('Unhandled Exception:', err);
+  console.error('Exception Origin:', origin);
+  // You might want to exit the process after logging,
+  // as the application state might be unstable.
+  process.exit(1); // @todo sync cleanup logic
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // You might want to exit the process after logging.
+  process.exit(1); // @todo sync cleanup logic
+});
 
 async function createServer() {
   const app = express();
