@@ -5,6 +5,5 @@
 </script>
 
 <template>
-    <div><router-link to="/">Home</router-link></div>
-    <div><router-link to="/books">Books</router-link></div>
+    <div>Welcome to my app</div>
 </template>

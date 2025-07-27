@@ -6,12 +6,11 @@ const { book, isLoading, loadBook } = useBooks();
 
 const props = defineProps<{ id: string }>();
 //const book = ref<any>(null);
-const loading = ref(true);
+//const loading = ref(true);
 
 watch(
   () => props.id,
   async (newId) => {
-    console.log(newId);
     loadBook(newId);
   },
   { immediate: true }
@@ -22,7 +21,7 @@ watch(
   <div class="p-4">
     <button @click="$emit('back')" class="text-blue-600 mb-4">← Back to list</button>
 
-    <div v-if="loading" class="text-center py-4">Loading book...</div>
+    <div v-if="isLoading" class="text-center py-4">Loading book...</div>
     <div v-else-if="book" class="max-w-md mx-auto">
       <img
         :src="book.imageUrl"

@@ -55,7 +55,7 @@ export class Repository {
         works.forEach((work: any) => {
             if (work.best_book) {
                 books.push({
-                    id: work.best_book.id,
+                    id: work.best_book.id._,
                     title: work.best_book.title,
                     author: work.best_book.author.name,
                 });
