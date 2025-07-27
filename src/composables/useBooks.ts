@@ -1,20 +1,27 @@
 import { ref } from "vue";
-import { booksService } from '../services/books';
-import { Book } from "../../server/lib/goodreads/repository";
+import { booksService } from '@/services/books';
+import { Book } from "@server/lib/goodreads/repository";
+import { Pagination } from "@server/types";
 
 export function useBooks() {
     const books = ref<Book[]>([]);
     const book = ref<Book>();
+    const pagination = ref<Pagination>({ perPage: 0, currentPage: 0, totalPages: 0 });
 
     const { fetch, fetchOne } = booksService();
 
     const isLoading = ref(false);
 
     const loadBooks = async (q: string, page: number) => {
-        if (isLoading.value) return;
+        if (isLoading.value || !q.length) { 
+            return;
+        }
+        
         isLoading.value = true;
         try {
-            books.value = await fetch(q, page);
+            const { data: d, pagination: p } = await fetch(q, page);
+            books.value = d ?? [];
+            pagination.value = p ?? { perPage: 0, currentPage: 0, totalPages: 0 };
         } catch (e) {
             alert(e); // @todo do better, like a modal
         } finally {
@@ -23,7 +30,9 @@ export function useBooks() {
     };
 
     const loadBook = async (id: string) => {
-        if (isLoading.value) return;
+        if (isLoading.value) {
+            return;
+        }
         isLoading.value = true;
         try {
             book.value = await fetchOne(id);
@@ -35,9 +44,11 @@ export function useBooks() {
     }
 
     return {
+        isLoading,
         books,
         book,
         loadBooks,
         loadBook,
+        pagination,
     }
 }

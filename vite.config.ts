@@ -1,13 +1,18 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ command, ssrBuild }) => ({
-  plugins: [vue()],
+  plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '@server': path.resolve(__dirname, 'server'),
+    },
+  },
   build: {
     ssr: ssrBuild,
-    //emptyOutDir: !ssrBuild, // Only clean dist/ when doing client build
-    //manifest: !ssrBuild,    // Only needed for client build
     rollupOptions: {
       input: ssrBuild ? 'server/server.ts' : path.resolve(__dirname, 'index.html'),
       external: ['fs', 'path'] 

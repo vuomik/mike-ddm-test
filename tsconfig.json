@@ -14,7 +14,12 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["vite/client", "vue"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@server/*": ["server/*"]
+    },
   },
   "include": ["src/**/*", "server/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
 }

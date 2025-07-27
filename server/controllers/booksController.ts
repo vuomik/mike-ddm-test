@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 const searchQuerySchema = z.object({
   q: z.string().min(1, 'Search query (q) is required.'),
-  page: z.number().int().min(1).optional().default(1),
+  page: z.coerce.number().int().min(1).optional().default(1),
 });
 
 const bookParamsSchema = z.object({

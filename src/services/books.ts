@@ -5,7 +5,7 @@ import { Book } from '../../server/lib/goodreads/repository';
 
 export function booksService()
 {
-    const fetch = async (q: string, page: number): Promise<Book[]> => {
+    const fetch = async (q: string, page: number): Promise<ApiResponse<Book[]>> => {
         try {
             const response = await axios.get<ApiResponse<Book[]>>(`/api/books`, {
                 params: { q, page }
@@ -13,7 +13,7 @@ export function booksService()
             if (!response.data.data) {
                 throw new Error('No data');
             }
-            return response.data.data;
+            return response.data;
         } catch (e) {
             throw handleError(e);
         }
