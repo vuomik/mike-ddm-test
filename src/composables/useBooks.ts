@@ -1,7 +1,8 @@
 import { ref } from "vue";
 import { booksService } from '@/services/books';
 import { Book } from "@server/lib/goodreads/repository";
-import { Pagination } from "@server/types";
+import { Message, Pagination } from "@server/types";
+import { ApiError } from "@/exceptions";
 
 export function useBooks() {
     const books = ref<Book[]>([]);
@@ -22,8 +23,6 @@ export function useBooks() {
             const { data: d, pagination: p } = await fetch(q, page);
             books.value = d ?? [];
             pagination.value = p ?? { perPage: 0, currentPage: 0, totalPages: 0 };
-        } catch (e) {
-            alert(e); // @todo do better, like a modal
         } finally {
             isLoading.value = false;
         }
@@ -36,10 +35,18 @@ export function useBooks() {
         isLoading.value = true;
         try {
             book.value = await fetchOne(id);
-        } catch (e) {
-            alert(e); // @todo do better, like a modal
         } finally {
             isLoading.value = false;
+        }
+    }
+
+    const getErrorMessages = (e: unknown): Message[] => {
+        if (e instanceof ApiError) {
+            return e.messages;
+        } else if (e instanceof Error) {
+            return [{text: e.message}];
+        } else {
+            return [{text:'Unknown error'}];
         }
     }
 
@@ -50,5 +57,6 @@ export function useBooks() {
         loadBooks,
         loadBook,
         pagination,
+        getErrorMessages,
     }
 }

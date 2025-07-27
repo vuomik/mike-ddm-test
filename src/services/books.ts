@@ -2,6 +2,7 @@ import axios from 'axios';
 // @todo should these be in a shared types location?
 import { ApiResponse } from '../../server/types';
 import { Book } from '../../server/lib/goodreads/repository';
+import { ApiError } from '@/exceptions';
 
 export function booksService()
 {
@@ -39,12 +40,10 @@ export function booksService()
 
 const handleError = (e: unknown) => {
     if (axios.isAxiosError(e)) {
-        const status = e.response?.status;
-        const message = e.response?.data?.messages?.map((m: any) => m.text).join('; ');
-        throw new Error(`Error (HTTP ${status}): ${message || e.message}`);
+        throw new ApiError(e.response?.data?.messages ?? []);
     } else if (e instanceof Error) {
-        throw e;
+        throw new ApiError([{text: e.message}]);
     } else {
-        throw new Error(`Unknown error: ${e}`);
+        throw e;
     }
 }

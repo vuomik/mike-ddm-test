@@ -4,9 +4,6 @@ import { calculatePagination } from '../../utils/pages';
 import { PaginatedResult } from '../../types';
 import { inject, injectable } from 'tsyringe';
 
-export class BookNotFound extends Error {
-}
-
 export interface Book {
     id: string;
     title: string;
@@ -69,9 +66,6 @@ export class Repository {
         const xmlResponse = await this.client.getById(bookId);
         const parsedXml = await this.parseXml(xmlResponse);
         const bookData = parsedXml.GoodreadsResponse.book;
-        if (!bookData) {
-            throw new BookNotFound(`Book with ID ${bookId} not found in Goodreads response.`);
-        }
 
         const book: Book = {
             id: bookData.id,

@@ -2,20 +2,29 @@
 <script setup lang="ts">
 import { useBooks } from '@/composables/useBooks';
 import { useRoute, useRouter } from 'vue-router';
-import { computed, onMounted, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { z } from 'zod';
+import { Message } from '@server/types';
 
 const route = useRoute();
 const router = useRouter();
 
-const { books, isLoading, loadBooks, pagination } = useBooks();
+const { books, isLoading, loadBooks, pagination, getErrorMessages } = useBooks();
 
 const query = ref(z.coerce.string().default('').parse(route.query.q));
 const page = ref(z.coerce.number().int().default(1).parse(route.query.page));
 
-const onSearch = () => {
+const emit = defineEmits<{
+    (e: 'error', messages: Message[]): void,
+}>();
+
+const onSearch = async () => {
   page.value = 1;
-  loadBooks(query.value, page.value);
+  try {
+    await loadBooks(query.value, page.value);
+  } catch (e: unknown) {
+    emit('error', getErrorMessages(e));
+  }
   updateUrl();
 };
 
@@ -47,8 +56,8 @@ const prevPage = () => {
 const showPrevPage = computed(() => page.value > 1);
 const showNextPage = computed(() => page.value < pagination.value.totalPages);
 
-const emit = defineEmits(['select']);
-const selectBook = (id: string) => emit('select', id);
+//const selectBook = (id: string) => emit('select', id);
+const selectBook = (id: string) => router.push({ path: `/books/${id}` });
 
 onMounted(() => {
   loadBooks(query.value, page.value);

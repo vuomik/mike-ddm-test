@@ -1,6 +1,8 @@
 import { createRouter as _createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Books from '../views/Books.vue';
+import BookList from '@/components/BookList.vue';
+import BookDetails from '@/components/BookDetails.vue';
 
 export default function createRouter() {
   return _createRouter({
@@ -17,11 +19,17 @@ export default function createRouter() {
         path: '/books',
         name: 'Books',
         component: Books,
-      },
-      {
-        path: '/books/:id',
-        name: 'Book Details',
-        component: Books,
+        children: [
+          { 
+            path: '',
+            component: BookList
+          },
+          {
+            path: ':id',
+            component: BookDetails,
+          
+          }
+        ]
       },
     ],
   });

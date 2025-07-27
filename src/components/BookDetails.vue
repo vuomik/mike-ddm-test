@@ -1,26 +1,38 @@
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useBooks } from '@/composables/useBooks';
-const { book, isLoading, loadBook } = useBooks();
+import { Message } from '@server/types';
+import { z } from 'zod';
 
-const props = defineProps<{ id: string }>();
-//const book = ref<any>(null);
-//const loading = ref(true);
+const { book, isLoading, loadBook, getErrorMessages } = useBooks();
 
-watch(
-  () => props.id,
-  async (newId) => {
-    loadBook(newId);
-  },
-  { immediate: true }
-);
+const route = useRoute();
+const router = useRouter();
+
+const id = z.coerce.string().parse(route.params.id);
+
+const emit = defineEmits<{
+    (e: 'error', messages: Message[]): void,
+}>();
+
+const goBack = () => {
+  router.push({ path: '/books', query: route.query }); // preserve q + page
+};
+
+onMounted(async () => {
+  try {
+    await loadBook(id);
+  } catch (e: unknown) {
+    emit('error', getErrorMessages(e));
+  }
+});
+
 </script>
 
 <template>
   <div class="p-4">
-    <button @click="$emit('back')" class="text-blue-600 mb-4">← Back to list</button>
-
     <div v-if="isLoading" class="text-center py-4">Loading book...</div>
     <div v-else-if="book" class="max-w-md mx-auto">
       <img

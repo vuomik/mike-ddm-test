@@ -1,10 +1,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import BookList from '@/components/BookList.vue';
-import BookDetails from '@/components/BookDetails.vue';
+//import BookList from '@/components/BookList.vue';
+//import BookDetails from '@/components/BookDetails.vue';
+import { Message } from '@server/types';
 
-const selectedId = ref<string | null>(null);
+//const selectedId = ref<string | null>(null);
+const errorMessages = ref<Message[] | null>(null);
+
+const handleError = (messages: Message[]) => {
+  errorMessages.value = messages;
+  setTimeout(() => errorMessages.value = null, 1000);
+}
+
 </script>
 
 <template>
@@ -14,13 +22,12 @@ const selectedId = ref<string | null>(null);
       <p class="text-sm sm:text-base mt-2">Search and browse books with ease</p>
     </div>
 
-    <BookList v-if="!selectedId" @select="selectedId = $event">
-      <template #banner>
-        <!-- Optional image banner or ad space -->
-      </template>
-    </BookList>
+    <div v-if="errorMessages?.length" class="my-4 p-4 border border-red-300 bg-red-50 text-red-700 rounded">
+        <div class="block font-semibold mb-1">Oops! Something went wrong</div>
+        <div v-for="errorMessage in errorMessages" :key="errorMessage.text">{{ errorMessage.text }}</div>
+    </div>
 
-    <BookDetails v-else :id="selectedId" @back="selectedId = null" />
+    <RouterView @error="handleError" />
   </div>
 </template>
 

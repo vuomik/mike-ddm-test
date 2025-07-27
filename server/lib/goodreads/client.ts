@@ -1,5 +1,8 @@
-import axios, { AxiosInstance } from 'axios'; // Make sure to 'npm install axios'
+import axios, { AxiosInstance } from 'axios';
 import { injectable } from 'tsyringe';
+
+export class BookNotFound extends Error {
+}
 
 export interface ClientConfig {
     apiKey: string;
@@ -58,10 +61,12 @@ export class Client {
             return response.data;
 
         } catch (e: unknown) {
-             if (e instanceof Error) {
+            if (axios.isAxiosError(e) && e.response?.status === 404) {
+                throw new BookNotFound();
+            } else if (e instanceof Error) {
                 throw e;
             } else {
-                throw new Error('Unexpected error rerieving book', { cause: e });
+                throw new Error('Unexpected error retrieving book', { cause: e });
             }
         }
     }
