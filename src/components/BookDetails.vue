@@ -1,9 +1,9 @@
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBooks } from '@/composables/useBooks';
-import { Message } from '@server/types';
+import { Message } from '@shared/types';
 import { z } from 'zod';
 
 const { book, isLoading, loadBook, getErrorMessages } = useBooks();
@@ -16,10 +16,6 @@ const id = z.coerce.string().parse(route.params.id);
 const emit = defineEmits<{
     (e: 'error', messages: Message[]): void,
 }>();
-
-const goBack = () => {
-  router.push({ path: '/books', query: route.query }); // preserve q + page
-};
 
 onMounted(async () => {
   try {

@@ -1,17 +1,10 @@
 import { parseStringPromise } from 'xml2js';
-import { Client } from './client';
-import { calculatePagination } from '../../utils/pages';
-import { PaginatedResult } from '../../types';
+import { Client } from '@server/lib/goodreads/client';
+import { calculatePagination } from '@server/utils/pages';
+import { PaginatedResult, Book } from '@shared/types';
 import { inject, injectable } from 'tsyringe';
 
-export interface Book {
-    id: string;
-    title: string;
-    author: string;
-    description?: string;
-    imageUrl?: string;
-    averageRating?: number;
-    publicationYear?: number;
+export class NoSearchResultsError extends Error {
 }
 
 @injectable()
@@ -22,11 +15,9 @@ export class Repository {
 
     private async parseXml(xmlString: string): Promise<any> {
         try {
-            // explicitArray: false ensures single elements are not wrapped in arrays
-            // mergeAttrs: true merges XML attributes into the element object
             return await parseStringPromise(xmlString, { explicitArray: false, mergeAttrs: true });
         } catch (error: any) {
-            console.error('Error parsing XML:', error.message);
+            console.error('Error parsing XML:', error.message); // @todo fix error should be unknown
             throw new Error('Failed to parse XML response.');
         }
     }
@@ -43,7 +34,7 @@ export class Repository {
         const books: Book[] = [];
 
         if (!searchResults || !searchResults.work) {
-            throw new Error('No search results found in Goodreads response.');
+            return { pagination, result: books };
         }
 
         // @todo typeguard?

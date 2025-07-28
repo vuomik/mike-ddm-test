@@ -1,7 +1,5 @@
 import axios from 'axios';
-// @todo should these be in a shared types location?
-import { ApiResponse } from '../../server/types';
-import { Book } from '../../server/lib/goodreads/repository';
+import { ApiResponse, Book } from '@shared/types';
 import { ApiError } from '@/exceptions';
 
 export function booksService()

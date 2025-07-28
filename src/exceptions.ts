@@ -1,4 +1,4 @@
-import { Message } from "@server/types";
+import { Message } from "@shared/types";
 
 export class ApiError extends Error {
     public constructor(public readonly messages: Message[]) {

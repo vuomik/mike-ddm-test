@@ -1,4 +1,4 @@
-import { ApiResponse } from '@server/types';
+import { ApiResponse } from '@shared/types';
 import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { isHttpError } from 'http-errors';
 

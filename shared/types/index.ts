@@ -1,3 +1,13 @@
+export interface Book {
+    id: string;
+    title: string;
+    author: string;
+    description?: string;
+    imageUrl?: string;
+    averageRating?: number;
+    publicationYear?: number;
+}
+
 export interface Message {
     code?: string;
     text: string;

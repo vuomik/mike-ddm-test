@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import {
   searchBooks, getBook,
-} from '../controllers/booksController';
-import { authenticate } from '../middleware/authentication';
-import { authorize } from '../middleware/authorization';
+} from '@server/controllers/booksController';
+import { authenticate } from '@server/middleware/authentication';
+import { authorize } from '@server/middleware/authorization';
 
 const router = Router();
 

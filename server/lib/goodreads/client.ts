@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { injectable } from 'tsyringe';
 
-export class BookNotFound extends Error {
+export class BookNotFoundError extends Error {
 }
 
 export interface ClientConfig {
@@ -62,7 +62,7 @@ export class Client {
 
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 404) {
-                throw new BookNotFound();
+                throw new BookNotFoundError();
             } else if (e instanceof Error) {
                 throw e;
             } else {

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Repository as GoodReadsRepository, Book } from '@server/lib/goodreads/repository';
-import { BookNotFound } from '@server/lib/goodreads/client';
-import { ApiResponse } from '@server/types';
+import { Repository as GoodReadsRepository } from '@server/lib/goodreads/repository';
+import { BookNotFoundError } from '@server/lib/goodreads/client';
+import { ApiResponse, Book } from '@shared/types';
 import { container } from 'tsyringe';
 import asyncHandler from 'express-async-handler';
 import createError from 'http-errors';
@@ -43,7 +43,7 @@ export const getBook = asyncHandler(async (req: Request, res: Response<ApiRespon
     } catch (e: unknown) {
         if (e instanceof z.ZodError) {
             throw createError.BadRequest('Please check your parameters: "id" must be a non-empty string');
-        } else if (e instanceof BookNotFound) {
+        } else if (e instanceof BookNotFoundError) {
             throw createError.NotFound('I searched everywhere but I just could not find your book!');
         }
         throw e;

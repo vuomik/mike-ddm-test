@@ -1,7 +1,6 @@
 import { ref } from "vue";
 import { booksService } from '@/services/books';
-import { Book } from "@server/lib/goodreads/repository";
-import { Message, Pagination } from "@server/types";
+import { Message, Pagination, Book } from "@shared/types";
 import { ApiError } from "@/exceptions";
 
 export function useBooks() {

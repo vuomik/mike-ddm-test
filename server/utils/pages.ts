@@ -1,4 +1,4 @@
-import { Pagination } from '../types';
+import { Pagination } from '@shared/types';
 
 export function calculatePagination(
   resultsStart: number,

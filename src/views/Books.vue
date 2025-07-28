@@ -1,16 +1,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-//import BookList from '@/components/BookList.vue';
-//import BookDetails from '@/components/BookDetails.vue';
-import { Message } from '@server/types';
+import { Message } from '@shared/types';
 
-//const selectedId = ref<string | null>(null);
 const errorMessages = ref<Message[] | null>(null);
 
 const handleError = (messages: Message[]) => {
   errorMessages.value = messages;
-  setTimeout(() => errorMessages.value = null, 1000);
+  setTimeout(() => errorMessages.value = null, 5000); // @todo reset the timer on a change
 }
 
 </script>

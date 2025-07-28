@@ -1,10 +1,9 @@
-
 <script setup lang="ts">
 import { useBooks } from '@/composables/useBooks';
 import { useRoute, useRouter } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
 import { z } from 'zod';
-import { Message } from '@server/types';
+import { Message } from '@shared/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -53,11 +52,11 @@ const prevPage = () => {
   }
 };
 
+const selectBook = (id: string) => router.push({ path: `/books/${id}` });
+
 const showPrevPage = computed(() => page.value > 1);
 const showNextPage = computed(() => page.value < pagination.value.totalPages);
-
-//const selectBook = (id: string) => emit('select', id);
-const selectBook = (id: string) => router.push({ path: `/books/${id}` });
+const showSearchResults = computed(() => query.value !== '' && books.value.length > 0);
 
 onMounted(() => {
   loadBooks(query.value, page.value);
@@ -87,26 +86,26 @@ onMounted(() => {
         </div>
     </div>
 
-    <div class="flex justify-between items-center mt-6">
-        <button
-            class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-            :disabled="!showPrevPage"
-            @click="prevPage"
-        >
-            Previous
-        </button>
-        <span class="text-sm">Page {{ page }} of {{ pagination.totalPages }}</span>
-        <button
-            class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-            :disabled="!showNextPage"
-            @click="nextPage"
-        >
-            Next
-        </button>
-    </div>
-
     <div v-if="isLoading" class="text-center py-4">Loading...</div><!-- ajax loader asset -->
-    <div v-else>
+    <div v-else-if="showSearchResults">
+        <div class="flex justify-between items-center mt-6">
+            <button
+                class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                :disabled="!showPrevPage"
+                @click="prevPage"
+            >
+                Previous
+            </button>
+            <span class="text-sm">Page {{ page }} of {{ pagination.totalPages }}</span>
+            <button
+                class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                :disabled="!showNextPage"
+                @click="nextPage"
+            >
+                Next
+            </button>
+        </div>
+
       <div class="grid sm:grid-cols-2 lg:grid-cols-2 gap-4">
         <div
           v-for="book in books"
@@ -118,6 +117,9 @@ onMounted(() => {
           <p class="text-sm text-gray-600">by {{ book.author }}</p>
         </div>
       </div>
+    </div>
+    <div v-else class="text-center py-4">
+        There are no search results.  Please try a different search.
     </div>
   </div>
 </template>
