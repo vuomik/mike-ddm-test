@@ -3,7 +3,7 @@ services:
     build:
       context: .
       target: development
-    env_file: 
+    env_file:
       - ./.env
     ports:
       - 3002:3000
@@ -18,7 +18,7 @@ services:
       target: production
     env_file: .env.production
     ports:
-      - "3080:3000"
+      - '3080:3000'
     environment:
       NODE_ENV: production
     command: npm run start

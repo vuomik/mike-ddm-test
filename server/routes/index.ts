@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import BookRoutes from './bookRoutes';
+import { Router } from 'express'
+import BookRoutes from './bookRoutes'
 
-const router: Router = Router();
+const router: Router = Router()
 
-router.use('/books', BookRoutes);
+router.use('/books', BookRoutes)
 
-export default router;
+export default router

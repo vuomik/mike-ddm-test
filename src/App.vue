@@ -1,10 +1,8 @@
 <script setup lang="ts">
-
-import Navigation from './components/Navigation.vue';
-
+import Navigation from './components/Navigation.vue'
 </script>
 
 <template>
-    <Navigation />
-    <router-view />
+  <Navigation />
+  <router-view />
 </template>

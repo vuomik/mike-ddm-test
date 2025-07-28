@@ -2,7 +2,7 @@ TAKE-HOME PROJECT
 
 Please use AI to assist you for this project. There is no time limit but most candidates spend a few hours on this. We ask that you submit your assignment to Jordan at least 24 hours before your scheduled interview.
 
-Create a small web app that lets users search for books. Use Vue/CSS/JS and a server-side orchestration layer in Node.js that proxies and transforms  the Goodreads public API. The front end should provide a search bar where a user can enter text, and view that shows book results. The backend should contain an endpoint that accepts search and pagination info, connects to the Goodreads search API, transforms the XML into JSON and keeps RESTful practices in mind. It's up to you what metadata you'd like to render for each book, how you want to handle display states for pagination, errors, etc.
+Create a small web app that lets users search for books. Use Vue/CSS/JS and a server-side orchestration layer in Node.js that proxies and transforms the Goodreads public API. The front end should provide a search bar where a user can enter text, and view that shows book results. The backend should contain an endpoint that accepts search and pagination info, connects to the Goodreads search API, transforms the XML into JSON and keeps RESTful practices in mind. It's up to you what metadata you'd like to render for each book, how you want to handle display states for pagination, errors, etc.
 
 Goodreads account credentials:
 Key: RDfV4oPehM6jNhxfNQzzQ

@@ -1,13 +1,11 @@
-import { Router } from 'express';
-import {
-  searchBooks, getBook,
-} from '@server/controllers/booksController';
-import { authenticate } from '@server/middleware/authentication';
-import { authorize } from '@server/middleware/authorization';
+import { Router } from 'express'
+import { searchBooks, getBook } from '@server/controllers/booksController'
+import { authenticate } from '@server/middleware/authentication'
+import { authorize } from '@server/middleware/authorization'
 
-const router = Router();
+const router = Router()
 
-router.get('/', authenticate, authorize, searchBooks);
-router.get('/:id', authenticate, authorize, getBook);
+router.get('/', authenticate, authorize, searchBooks)
+router.get('/:id', authenticate, authorize, getBook)
 
-export default router;
+export default router

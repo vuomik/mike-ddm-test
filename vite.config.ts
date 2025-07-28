@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import path from 'path';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ command, ssrBuild }) => ({
   plugins: [vue(), tailwindcss()],
@@ -15,9 +15,11 @@ export default defineConfig(({ command, ssrBuild }) => ({
   build: {
     ssr: ssrBuild,
     rollupOptions: {
-      input: ssrBuild ? 'server/server.ts' : path.resolve(__dirname, 'index.html'),
-      external: ['fs', 'path'] 
+      input: ssrBuild
+        ? 'server/server.ts'
+        : path.resolve(__dirname, 'index.html'),
+      external: ['fs', 'path'],
     },
     outDir: ssrBuild ? 'dist/server' : 'dist/client',
-  }
-}));
+  },
+}))
