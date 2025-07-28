@@ -53,6 +53,8 @@ async function createServer(): Promise<void> {
       path.resolve(root, 'ssr/entry-server.js')
     )) as EntryServer
 
+    app.use(express.static(path.join(dirName, '../client')))
+
     app.get('*', async (req, res) => {
       try {
         const html = await render()
