@@ -94,9 +94,8 @@ onMounted(async () => {
     </div>
 
     <div v-if="isLoading" class="text-center py-4">Loading...</div>
-    <!-- ajax loader asset -->
     <div v-else-if="showSearchResults">
-      <div class="flex justify-between items-center mt-6">
+      <div class="flex justify-between items-center mt-6 mb-6">
         <button
           class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           :disabled="!showPrevPage"
