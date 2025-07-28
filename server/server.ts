@@ -109,8 +109,8 @@ async function createServer(): Promise<void> {
   }
 
   /* eslint-disable-next-line  @typescript-eslint/no-non-null-assertion -- Required in .env file to run */
-  const port = process.env.PORT!
-  app.listen(port, () => {
+  const port = parseInt(process.env.PORT!, 10)
+  app.listen(port, '0.0.0.0', () => {
     /* eslint-disable-next-line no-console -- Errors go to logs */
     console.log(`App running on ${port}`)
   })
