@@ -21,6 +21,6 @@
       "@shared/*": ["shared/*"]
     }
   },
-  "include": ["src/**/*", "server/**/*.ts"],
+  "include": ["src/**/*", "server/**/*.ts", "vite.config.ts", "eslint.config.ts"],
   "exclude": ["node_modules"]
 }

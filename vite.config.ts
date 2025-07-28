@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ command, ssrBuild }) => ({
@@ -13,13 +13,16 @@ export default defineConfig(({ command, ssrBuild }) => ({
     },
   },
   build: {
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Allowing this */
     ssr: ssrBuild,
     rollupOptions: {
+      /* eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- Allowing this */
       input: ssrBuild
         ? 'server/server.ts'
         : path.resolve(__dirname, 'index.html'),
       external: ['fs', 'path'],
     },
+    /* eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- Allowing this */
     outDir: ssrBuild ? 'dist/server' : 'dist/client',
   },
 }))

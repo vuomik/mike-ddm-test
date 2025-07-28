@@ -63,7 +63,10 @@ export class Client {
       const response = await this.axiosInstance.get<string>(url, { params })
       return response.data
     } catch (e: unknown) {
-      if (axios.isAxiosError(e) && e.response?.status === StatusCodes.NOT_FOUND) {
+      if (
+        axios.isAxiosError(e) &&
+        e.response?.status === StatusCodes.NOT_FOUND
+      ) {
         throw new BookNotFoundError()
       } else if (e instanceof Error) {
         throw e
