@@ -6,10 +6,7 @@
     "build:ssr": "npx vite build --ssr src/entry-server.ts --outDir dist/ssr",
     "build": "npm run build:client && npm run build:server && npm run build:ssr",
     "dev": "NODE_ENV=development tsx server/server.ts",
-    "start": "NODE_ENV=production node dist/server/server.js",
-    "test": "vitest run",
-    "test:ui": "vitest --ui",
-    "type-check": "vue-tsc --noEmit"
+    "start": "NODE_ENV=production node dist/server/server.js"
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
