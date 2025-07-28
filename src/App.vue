@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Navigation from './components/Navigation.vue'
+import NavigationBar from './components/NavigationBar.vue'
 </script>
 
 <template>
-  <Navigation />
+  <NavigationBar />
   <router-view />
 </template>

@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Message } from '@shared/types'
+import type { Message } from '@shared/types'
+
+const VIEW_ERROR_TIMEOUT = 5000
 
 const errorMessages = ref<Message[] | null>(null)
 
 let errorTimeout: ReturnType<typeof setTimeout> | null = null
 
-const handleError = (messages: Message[]) => {
+const handleError = (messages: Message[]): void => {
   errorMessages.value = messages
-  if (errorTimeout) {
+  if (errorTimeout !== null) {
     clearTimeout(errorTimeout)
   }
-  errorTimeout = setTimeout(() => (errorMessages.value = null), 5000)
+  errorTimeout = setTimeout(
+    () => (errorMessages.value = null),
+    VIEW_ERROR_TIMEOUT
+  )
 }
 </script>
 

@@ -6,9 +6,11 @@ import type {
   Response,
 } from 'express'
 import { isHttpError } from 'http-errors'
+import { StatusCodes } from 'http-status-codes'
 
-const isError = (error: unknown): error is Error =>
-  error !== null && typeof error === 'object' && 'message' in error
+const isClientError = (statusCode: unknown): statusCode is number =>
+  /* eslint-disable-next-line @typescript-eslint/no-magic-numbers -- Verify that this falls in the range of client-side HTTP status codes */
+  typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500
 
 export const errorHandler: ErrorRequestHandler = (
   error: unknown,
@@ -17,12 +19,15 @@ export const errorHandler: ErrorRequestHandler = (
 
   next: NextFunction
 ) => {
-  if (isHttpError(error) && error.statusCode < 500) {
+  if (isHttpError(error) && isClientError(error.statusCode)) {
     return res
       .status(error.statusCode)
       .json({ messages: [{ text: error.message }] })
   } else {
-    const statusCode = isHttpError(error) ? error.statusCode : 500
+    const statusCode = isHttpError(error)
+      ? error.statusCode
+      : StatusCodes.INTERNAL_SERVER_ERROR
+    /* eslint-disable-next-line no-console -- Always log server errors for review */
     console.error('An unexpected server-side error occurred:', error)
     return res.status(statusCode).json({
       messages: [

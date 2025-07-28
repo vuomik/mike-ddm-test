@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 const isOpen = ref(false)
 
-const toggleMenu = () => {
+const toggleMenu = (): void => {
   isOpen.value = !isOpen.value
 }
 </script>
@@ -34,10 +34,10 @@ const toggleMenu = () => {
         <!-- Hamburger icon -->
         <div class="md:hidden">
           <button
-            @click="toggleMenu"
             class="text-white focus:outline-none"
             aria-controls="mobile-menu"
             :aria-expanded="isOpen ? 'true' : 'false'"
+            @click="toggleMenu"
           >
             <svg
               class="h-6 w-6"
@@ -59,15 +59,15 @@ const toggleMenu = () => {
     <!-- Mobile menu -->
     <div v-if="isOpen" class="md:hidden bg-black px-4 pb-4 space-y-2">
       <router-link
-        @click="isOpen = false"
         to="/"
         class="block text-white hover:underline px-3 py-2 rounded-md"
+        @click="isOpen = false"
         >Home</router-link
       >
       <router-link
-        @click="isOpen = false"
         to="/books"
         class="block text-white hover:underline px-3 py-2 rounded-md"
+        @click="isOpen = false"
         >Books</router-link
       >
     </div>

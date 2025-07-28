@@ -5,29 +5,32 @@ import express from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import routes from './routes'
+import routes from '@server/routes'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
+import { StatusCodes } from 'http-status-codes'
+import type { EntryServer } from '@/entry-server'
 
 dotenv.config()
 
+const EXIT_FAILURE = 1
+
 process.on('uncaughtException', (err, origin) => {
+  /* eslint-disable-next-line no-console -- Errors go to logs */
   console.error('Unhandled Exception:', err)
+  /* eslint-disable-next-line no-console -- Errors go to logs */
   console.error('Exception Origin:', origin)
-  process.exit(1)
+  process.exit(EXIT_FAILURE)
 })
 
 process.on('unhandledRejection', (reason, promise) => {
+  /* eslint-disable-next-line no-console -- Errors go to logs */
   console.error('Unhandled Rejection at:', promise, 'reason:', reason)
-  process.exit(1)
+  process.exit(EXIT_FAILURE)
 })
 
-async function createServer() {
+async function createServer(): Promise<void> {
   const app = express()
-
-  let render: () => Promise<string>
-  let template: string
-  let manifest: Record<string, any>
 
   app.use(express.json())
 
@@ -36,27 +39,34 @@ async function createServer() {
   app.use(errorHandler)
 
   if (process.env.NODE_ENV === 'production') {
-    const __filename = fileURLToPath(import.meta.url)
-    const __dirname = path.dirname(__filename)
-    const root = path.resolve(__dirname, '..')
+    const fileName = fileURLToPath(import.meta.url)
+    const dirName = path.dirname(fileName)
+    const root = path.resolve(dirName, '..')
 
-    template = fs.readFileSync(path.resolve(root, 'client/index.html'), 'utf-8')
-    manifest = JSON.parse(
-      fs.readFileSync(
-        path.resolve(root, 'client/.vite/ssr-manifest.json'),
-        'utf-8'
-      )
+    const template = fs.readFileSync(
+      path.resolve(root, 'client/index.html'),
+      'utf-8'
     )
-    render = (await import(path.resolve(root, 'ssr/entry-server.js'))).render
+
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- The function signature is safe */
+    const { render } = (await import(
+      path.resolve(root, 'ssr/entry-server.js')
+    )) as EntryServer
 
     app.get('*', async (req, res) => {
       try {
         const html = await render()
         const finalHtml = template.replace(`<!--app-html-->`, html)
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(finalHtml)
-      } catch (e) {
-        console.error(e)
-        res.status(500).end('Internal Server Error')
+        res
+          .status(StatusCodes.OK)
+          .set({ 'Content-Type': 'text/html' })
+          .end(finalHtml)
+      } catch (e: unknown) {
+        /* eslint-disable-next-line no-console -- Errors go to logs */
+        console.error(`SSR error: ${e instanceof Error ? e.message : ''}`, e)
+        res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .end('Internal Server Error')
       }
     })
   } else {
@@ -69,27 +79,39 @@ async function createServer() {
 
     app.get('*', async (req, res) => {
       try {
-        const url = req.originalUrl
+        const { originalUrl: url } = req
         const template = fs.readFileSync(path.resolve('index.html'), 'utf-8')
         const transformedTemplate = await vite.transformIndexHtml(url, template)
-        const { render } = await vite.ssrLoadModule('/src/entry-server.ts')
+
+        /* eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Force the any parameter to be allowed since we know what it is */
+        const { render } = (await vite.ssrLoadModule(
+          '/src/entry-server.ts'
+        )) as EntryServer
+
         const html = await render()
         res
-          .status(200)
+          .status(StatusCodes.OK)
           .set({ 'Content-Type': 'text/html' })
           .end(transformedTemplate.replace(`<!--app-html-->`, html))
-      } catch (e) {
-        vite.ssrFixStacktrace(e as Error)
-        console.error(e)
-        res.status(500).end('Internal Server Error')
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          vite.ssrFixStacktrace(e)
+          /* eslint-disable-next-line no-console -- Errors go to logs */
+          console.error(`Vite error: ${e.message}`)
+        }
+        res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .end('Internal Server Error')
       }
     })
   }
 
-  const port = process.env.PORT || 3000
+  /* eslint-disable-next-line  @typescript-eslint/no-non-null-assertion -- Required in .env file to run */
+  const port = process.env.PORT!
   app.listen(port, () => {
-    console.log(`Vue app running at http://localhost:${port}`)
+    /* eslint-disable-next-line no-console -- Errors go to logs */
+    console.log(`App running on ${port}`)
   })
 }
 
-createServer()
+await createServer()

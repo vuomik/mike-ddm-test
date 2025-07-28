@@ -3,7 +3,8 @@ import { useBooks } from '@/composables/useBooks'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import { z } from 'zod'
-import { Message } from '@shared/types'
+import type { Message } from '@shared/types'
+import { INITIAL_PAGE } from '@server/utils/pages'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,57 +12,62 @@ const router = useRouter()
 const { books, isLoading, loadBooks, pagination, getErrorMessages } = useBooks()
 
 const query = ref(z.coerce.string().default('').parse(route.query.q))
-const page = ref(z.coerce.number().int().default(1).parse(route.query.page))
+const page = ref(
+  z.coerce.number().int().default(INITIAL_PAGE).parse(route.query.page)
+)
 
-const emit = defineEmits<{
-  (e: 'error', messages: Message[]): void
-}>()
+const emit = defineEmits<(e: 'error', messages: Message[]) => void>()
 
-const onSearch = async () => {
-  page.value = 1
+const onSearch = async (): Promise<void> => {
+  page.value = INITIAL_PAGE
   try {
     await loadBooks(query.value, page.value)
+    await updateUrl()
   } catch (e: unknown) {
     emit('error', getErrorMessages(e))
   }
-  updateUrl()
 }
 
-const updateUrl = () => {
-  router.push({
+const updateUrl = async (): Promise<void> => {
+  await router.push({
     query: {
-      q: query.value || undefined,
+      q: query.value,
       page: page.value.toString(),
     },
   })
 }
 
-const nextPage = () => {
+const nextPage = async (): Promise<void> => {
   if (page.value < pagination.value.totalPages) {
     page.value++
-    loadBooks(query.value, page.value)
-    updateUrl()
+    await loadBooks(query.value, page.value)
+    await updateUrl()
   }
 }
 
-const prevPage = () => {
+const prevPage = async (): Promise<void> => {
+  /* eslint-disable-next-line @typescript-eslint/no-magic-numbers -- First page is 1 */
   if (page.value > 1) {
     page.value--
-    loadBooks(query.value, page.value)
-    updateUrl()
+    await loadBooks(query.value, page.value)
+    await updateUrl()
   }
 }
 
-const selectBook = (id: string) => router.push({ path: `/books/${id}` })
+const selectBook = async (id: string): Promise<void> => {
+  await router.push({ path: `/books/${id}` })
+}
 
+/* eslint-disable-next-line @typescript-eslint/no-magic-numbers -- First page is 1 */
 const showPrevPage = computed(() => page.value > 1)
 const showNextPage = computed(() => page.value < pagination.value.totalPages)
 const showSearchResults = computed(
+  /* eslint-disable-next-line @typescript-eslint/no-magic-numbers -- Make sure we have at least 1 book to show results */
   () => query.value !== '' && books.value.length > 0
 )
 
-onMounted(() => {
-  loadBooks(query.value, page.value)
+onMounted(async () => {
+  await loadBooks(query.value, page.value)
 })
 </script>
 
@@ -79,8 +85,8 @@ onMounted(() => {
           @keyup.enter="onSearch"
         />
         <button
-          @click="onSearch"
           class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          @click="onSearch"
         >
           Search
         </button>
@@ -114,8 +120,8 @@ onMounted(() => {
         <div
           v-for="book in books"
           :key="book.id"
-          @click="selectBook(book.id)"
           class="p-4 border rounded hover:shadow cursor-pointer transition"
+          @click="selectBook(book.id)"
         >
           <h3 class="text-lg font-semibold">{{ book.title }}</h3>
           <p class="text-sm text-gray-600">by {{ book.author }}</p>

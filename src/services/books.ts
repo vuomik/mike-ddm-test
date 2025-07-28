@@ -2,7 +2,10 @@ import axios from 'axios'
 import type { ApiResponse, Book } from '@shared/types'
 import { ApiError } from '@/exceptions'
 
-export function booksService() {
+export function booksService(): {
+  fetch: (q: string, page: number) => Promise<ApiResponse<Book[]>>
+  fetchOne: (id: string) => Promise<Book>
+} {
   const fetch = async (
     q: string,
     page: number
@@ -11,11 +14,11 @@ export function booksService() {
       const response = await axios.get<ApiResponse<Book[]>>(`/api/books`, {
         params: { q, page },
       })
-      if (!response.data.data) {
+      if (response.data.data == null) {
         throw new Error('No data')
       }
       return response.data
-    } catch (e) {
+    } catch (e: unknown) {
       throw handleError(e)
     }
   }
@@ -23,11 +26,11 @@ export function booksService() {
   const fetchOne = async (id: string): Promise<Book> => {
     try {
       const response = await axios.get<ApiResponse<Book>>(`/api/books/${id}`)
-      if (!response.data.data) {
+      if (response.data.data == null) {
         throw new Error('No data')
       }
       return response.data.data
-    } catch (e) {
+    } catch (e: unknown) {
       throw handleError(e)
     }
   }
@@ -38,12 +41,14 @@ export function booksService() {
   }
 }
 
-const handleError = (e: unknown) => {
+const handleError = (e: unknown): Error => {
   if (axios.isAxiosError(e)) {
-    throw new ApiError(e.response?.data?.messages ?? [])
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+ -- Trusting isAxiosError as a type guard */
+    return new ApiError(e.response?.data?.messages ?? [])
   } else if (e instanceof Error) {
-    throw new ApiError([{ text: e.message }])
+    return new ApiError([{ text: e.message }])
   } else {
-    throw e
+    return new Error('Unknown error', { cause: e })
   }
 }

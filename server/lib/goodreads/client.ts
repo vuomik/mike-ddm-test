@@ -1,5 +1,9 @@
+import { INITIAL_PAGE } from '@server/utils/pages'
 import axios, { AxiosInstance } from 'axios'
+import { StatusCodes } from 'http-status-codes'
 import { injectable } from 'tsyringe'
+
+const DEFAULT_TIMEOUT = 10000
 
 export class BookNotFoundError extends Error {}
 
@@ -16,19 +20,20 @@ export class Client {
   private readonly axiosInstance: AxiosInstance
 
   constructor(config: ClientConfig) {
-    this.apiKey = config.apiKey
-    this.baseUrl = config.baseUrl
+    const { apiKey, baseUrl } = config
+    this.apiKey = apiKey
+    this.baseUrl = baseUrl
 
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
-      timeout: config.timeout || 10000,
+      timeout: config.timeout ?? DEFAULT_TIMEOUT,
       headers: {
         Accept: 'application/xml, text/xml, */*; q=0.01',
       },
     })
   }
 
-  public async search(query: string, page = 1): Promise<string> {
+  public async search(query: string, page = INITIAL_PAGE): Promise<string> {
     try {
       const url = '/search/index.xml'
       const params = {
@@ -58,7 +63,7 @@ export class Client {
       const response = await this.axiosInstance.get<string>(url, { params })
       return response.data
     } catch (e: unknown) {
-      if (axios.isAxiosError(e) && e.response?.status === 404) {
+      if (axios.isAxiosError(e) && e.response?.status === StatusCodes.NOT_FOUND) {
         throw new BookNotFoundError()
       } else if (e instanceof Error) {
         throw e

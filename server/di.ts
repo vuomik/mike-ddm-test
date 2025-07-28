@@ -14,6 +14,7 @@ container.register<GoodReadsClient>(GoodReadsClient, {
 
 container.register<GoodReadsClientConfig>('GoodReadsClientConfig', {
   useValue: {
+    /* eslint-disable-next-line  @typescript-eslint/no-non-null-assertion -- Required in .env file to run */
     apiKey: process.env.GOODREADS_KEY!,
     baseUrl: 'https://www.goodreads.com',
   },

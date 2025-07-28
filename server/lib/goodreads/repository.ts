@@ -1,41 +1,99 @@
 import { parseStringPromise } from 'xml2js'
 import { Client } from '@server/lib/goodreads/client'
-import { calculatePagination } from '@server/utils/pages'
+import { calculatePagination, INITIAL_PAGE } from '@server/utils/pages'
 import { PaginatedResult, Book } from '@shared/types'
 import { inject, injectable } from 'tsyringe'
+import { z } from 'zod'
 
 export class NoSearchResultsError extends Error {}
 
-@injectable()
-export class Repository {
-  constructor(@inject(Client) private readonly client: Client) {
-    this.client = client
-  }
+const bookSchema = z.object({
+  id: z.object({
+    _: z.string(),
+  }),
+  title: z.string(),
+  author: z.object({
+    name: z.string(),
+  }),
+  description: z.string().optional(),
+})
 
-  private async parseXml(xmlString: string): Promise<any> {
-    try {
-      return await parseStringPromise(xmlString, {
-        explicitArray: false,
-        mergeAttrs: true,
-      })
-    } catch (e: unknown) {
-      console.error('Error parsing XML:', e instanceof Error ? e.message : e)
-      throw new Error('Failed to parse XML response.')
+const workSchema = z.object({
+  best_book: bookSchema.optional(),
+})
+
+const goodreadsSearchResponseSchema = z.object({
+  GoodreadsResponse: z.object({
+    search: z.object({
+      results: z.object({
+        work: z.union([workSchema, z.array(workSchema)]).optional(),
+      }),
+      'results-start': z.coerce.number().int().min(INITIAL_PAGE),
+      'total-results': z.coerce.number().int(),
+    }),
+  }),
+})
+
+const goodreadsBookResponseSchema = z.object({
+  GoodreadsResponse: z.object({
+    book: z.object({
+      id: z.string(),
+      title: z.string(),
+      authors: z.object({
+        author: z.object({ name: z.string() }),
+      }),
+      description: z.string().optional(),
+      image_url: z.string().optional(),
+      average_rating: z.coerce.number(),
+      publication_year: z.coerce.number(),
+    }),
+  }),
+})
+
+const parseXml = async <T>(
+  xmlString: string,
+  schema: z.ZodType<T>
+): Promise<T> => {
+  const result: unknown = await parseStringPromise(xmlString, {
+    explicitArray: false,
+    mergeAttrs: true,
+  })
+  try {
+    return schema.parse(result)
+  } catch (e: unknown) {
+    if (e instanceof z.ZodError) {
+      throw new Error(e.message, { cause: e })
+    } else {
+      throw e
     }
   }
+}
 
-  public async search(query: string, page = 1): Promise<PaginatedResult<Book>> {
+@injectable()
+export class Repository {
+  constructor(@inject(Client) private readonly client: Client) {}
+
+  public async search(
+    query: string,
+    page = INITIAL_PAGE
+  ): Promise<PaginatedResult<Book>> {
     const xmlResponse = await this.client.search(query, page)
-    const parsedXml = await this.parseXml(xmlResponse)
-    const searchResults = parsedXml.GoodreadsResponse.search.results
-    const pagination = calculatePagination(
-      parseInt(parsedXml.GoodreadsResponse.search['results-start'], 10),
-      parseInt(parsedXml.GoodreadsResponse.search['results-end'], 10),
-      parseInt(parsedXml.GoodreadsResponse.search['total-results'], 10)
-    )
+    const parsedXml = await parseXml<
+      z.infer<typeof goodreadsSearchResponseSchema>
+    >(xmlResponse, goodreadsSearchResponseSchema)
+    const {
+      GoodreadsResponse: {
+        search: {
+          results: searchResults,
+          'results-start': resultsStart,
+          'total-results': totalResults,
+        },
+      },
+    } = parsedXml
+    const pagination = calculatePagination(resultsStart, totalResults)
     const books: Book[] = []
 
-    if (!searchResults?.work) {
+    if (searchResults.work == null) {
       return { pagination, result: books }
     }
 
@@ -43,14 +101,15 @@ export class Repository {
       ? searchResults.work
       : [searchResults.work]
 
-    works.forEach((work: any) => {
-      if (work.best_book) {
-        books.push({
-          id: work.best_book.id._,
-          title: work.best_book.title,
-          author: work.best_book.author.name,
-        })
+    works.forEach((work: z.infer<typeof workSchema>) => {
+      if (work.best_book == null) {
+        return
       }
+      books.push({
+        id: work.best_book.id._,
+        title: work.best_book.title,
+        author: work.best_book.author.name,
+      })
     })
 
     return { pagination, result: books }
@@ -58,19 +117,34 @@ export class Repository {
 
   public async getById(bookId: string): Promise<Book> {
     const xmlResponse = await this.client.getById(bookId)
-    const parsedXml = await this.parseXml(xmlResponse)
-    const bookData = parsedXml.GoodreadsResponse.book
+    const parsedXml = await parseXml<
+      z.infer<typeof goodreadsBookResponseSchema>
+    >(xmlResponse, goodreadsBookResponseSchema)
+    const {
+      GoodreadsResponse: {
+        book: {
+          id,
+          title,
+          authors: {
+            author: { name },
+          },
+          description,
+          image_url: imageUrl,
+          average_rating: averageRating,
+          publication_year: publicationYear,
+        },
+      },
+    } = parsedXml
 
     const book: Book = {
-      id: bookData.id,
-      title: bookData.title,
-      author: bookData.authors.author.name,
-      description: bookData.description
-        ? bookData.description.replace(/<[^>]*>/g, '')
-        : '',
-      imageUrl: bookData.image_url,
-      averageRating: parseFloat(bookData.average_rating),
-      publicationYear: parseInt(bookData.publication_year),
+      id,
+      title,
+      author: name,
+      description:
+        description != null ? description.replace(/<[^>]*>/g, '') : '',
+      imageUrl,
+      averageRating,
+      publicationYear,
     }
     return book
   }
