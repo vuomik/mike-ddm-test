@@ -6,7 +6,7 @@ const isError = (error: unknown): error is Error => {
     return (error !== null && typeof error === 'object' && 'message' in error);
 }
 
-export const errorHandler: ErrorRequestHandler = ( // @todo can this be fixed?
+export const errorHandler: ErrorRequestHandler = (
   error: unknown,
   req: Request,
   res: Response<ApiResponse<undefined>>,

@@ -5,9 +5,14 @@ import { Message } from '@shared/types';
 
 const errorMessages = ref<Message[] | null>(null);
 
+let errorTimeout: ReturnType<typeof setTimeout> | null = null;
+
 const handleError = (messages: Message[]) => {
   errorMessages.value = messages;
-  setTimeout(() => errorMessages.value = null, 5000); // @todo reset the timer on a change
+  if (errorTimeout) {
+    clearTimeout(errorTimeout);
+  }
+  errorTimeout = setTimeout(() => errorMessages.value = null, 5000);
 }
 
 </script>

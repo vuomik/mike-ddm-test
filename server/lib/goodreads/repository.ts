@@ -16,8 +16,8 @@ export class Repository {
     private async parseXml(xmlString: string): Promise<any> {
         try {
             return await parseStringPromise(xmlString, { explicitArray: false, mergeAttrs: true });
-        } catch (error: any) {
-            console.error('Error parsing XML:', error.message); // @todo fix error should be unknown
+        } catch (e: unknown) {
+            console.error('Error parsing XML:', (e instanceof Error) ? e.message : e);
             throw new Error('Failed to parse XML response.');
         }
     }
@@ -37,7 +37,6 @@ export class Repository {
             return { pagination, result: books };
         }
 
-        // @todo typeguard?
         const works = Array.isArray(searchResults.work) ? searchResults.work : [searchResults.work];
 
         works.forEach((work: any) => {
