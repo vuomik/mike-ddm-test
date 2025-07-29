@@ -1,7 +1,3 @@
-<script setup lang="ts">
-//import Hello from '@/components/Hello.vue';
-</script>
-
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8 text-center">
     <h1 class="text-4xl font-extrabold mb-6">The Mission</h1>
