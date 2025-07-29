@@ -1,0 +1,13 @@
+<GoodreadsResponse>
+  <book>
+    <id>123</id>
+    <title>Test Book</title>
+    <authors>
+      <author><name>Author Name</name></author>
+    </authors>
+    <description><![CDATA[<p>This is a <b>test</b> description</p>]]></description>
+    <image_url>http://example.com/image.jpg</image_url>
+    <average_rating>4.2</average_rating>
+    <publication_year>2020</publication_year>
+  </book>
+</GoodreadsResponse>
