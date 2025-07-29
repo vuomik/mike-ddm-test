@@ -40,7 +40,7 @@ const goodreadsBookResponseSchema = z.object({
       id: z.string(),
       title: z.string(),
       authors: z.object({
-        author: z.object({ name: z.string() }),
+        author: z.union([z.object({ name: z.string() }), z.array(z.object({ name: z.string() }))]),
       }),
       description: z.string().optional(),
       image_url: z.string().optional(),
@@ -62,6 +62,7 @@ const parseXml = async <T>(
     return schema.parse(result)
   } catch (e: unknown) {
     if (e instanceof z.ZodError) {
+      console.error(JSON.stringify(result));
       throw new Error(e.message, { cause: e })
     } else {
       throw e
@@ -125,9 +126,7 @@ export class Repository {
         book: {
           id,
           title,
-          authors: {
-            author: { name },
-          },
+          authors,
           description,
           image_url: imageUrl,
           average_rating: averageRating,
@@ -136,10 +135,14 @@ export class Repository {
       },
     } = parsedXml
 
+    const authorList = Array.isArray(authors.author)
+      ? authors.author.map(a => a.name).join(', ')
+      : authors.author.name
+
     const book: Book = {
       id,
       title,
-      author: name,
+      author: authorList,
       description:
         description != null ? description.replace(/<[^>]*>/g, '') : '',
       imageUrl,
