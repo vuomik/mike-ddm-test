@@ -1,7 +1,10 @@
 {
   "type": "module",
   "scripts": {
+    "build:server": "npx vite build --ssr server/server.ts --outDir dist/server",
+    "build": "npm run build:server",
     "dev": "NODE_ENV=development tsx server/server.ts",
+    "start": "NODE_ENV=production node dist/server/server.js",
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "format": "prettier --check .",
