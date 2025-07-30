@@ -1,4 +1,6 @@
 import express from 'express'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -24,14 +26,21 @@ async function createServer(): Promise<void> {
 
   app.use(express.json())
 
-  const { createServer: createViteServer } = await import('vite')
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'custom',
-  })
-  app.use(vite.middlewares)
-
   app.get('/', (req, res) => res.send('Hello DDM!'))
+
+  if (process.env.NODE_ENV === 'production') {
+    const fileName = fileURLToPath(import.meta.url)
+    const dirName = path.dirname(fileName)
+
+    app.use(express.static(path.join(dirName, '../client')))
+  } else {
+    const { createServer: createViteServer } = await import('vite')
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+    })
+    app.use(vite.middlewares)
+  }
 
   /* eslint-disable-next-line  @typescript-eslint/no-non-null-assertion -- Required in .env file to run */
   const port = parseInt(process.env.PORT!, 10)
