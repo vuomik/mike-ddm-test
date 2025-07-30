@@ -4,6 +4,7 @@ import { ApiError } from '@/exceptions'
 
 export function booksService(): {
   fetch: (q: string, page: number) => Promise<ApiResponse<Book[]>>
+  fetchOne: (id: string) => Promise<Book>
 } {
   const fetch = async (
     q: string,
@@ -22,8 +23,21 @@ export function booksService(): {
     }
   }
 
+  const fetchOne = async (id: string): Promise<Book> => {
+    try {
+      const response = await axios.get<ApiResponse<Book>>(`/api/books/${id}`)
+      if (response.data.data == null) {
+        throw new Error('No data')
+      }
+      return response.data.data
+    } catch (e: unknown) {
+      throw handleError(e)
+    }
+  }
+
   return {
     fetch,
+    fetchOne,
   }
 }
 

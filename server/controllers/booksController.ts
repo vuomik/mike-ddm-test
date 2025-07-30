@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { Repository as GoodReadsRepository } from '@server/lib/goodreads/repository'
+import { BookNotFoundError } from '@server/lib/goodreads/client'
 import type { ApiResponse, Book } from '@shared/types'
 import { container } from 'tsyringe'
 import asyncHandler from 'express-async-handler'
@@ -19,6 +20,10 @@ const searchQuerySchema = z.object({
     .default(INITIAL_PAGE),
 })
 
+const bookParamsSchema = z.object({
+  id: z.string(),
+})
+
 const repository = container.resolve(GoodReadsRepository)
 
 export const searchBooks = asyncHandler(
@@ -35,6 +40,27 @@ export const searchBooks = asyncHandler(
       if (e instanceof z.ZodError) {
         throw createError.BadRequest(
           'Please check your parameters: "page" must be a positive whole number, and "query" cannot be empty.'
+        )
+      }
+      throw e
+    }
+  }
+)
+
+export const getBook = asyncHandler(
+  async (req: Request, res: Response<ApiResponse<Book>>) => {
+    try {
+      const { id: bookId } = bookParamsSchema.parse(req.params)
+      const book: Book = await repository.getById(bookId)
+      res.status(StatusCodes.OK).json({ data: book })
+    } catch (e: unknown) {
+      if (e instanceof z.ZodError) {
+        throw createError.BadRequest(
+          'Please check your parameters: "id" must be a non-empty string'
+        )
+      } else if (e instanceof BookNotFoundError) {
+        throw createError.NotFound(
+          'I searched everywhere but I just could not find your book!'
         )
       }
       throw e

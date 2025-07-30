@@ -1,5 +1,6 @@
 import { INITIAL_PAGE } from '@server/utils/pages'
 import axios, { AxiosInstance } from 'axios'
+import { StatusCodes } from 'http-status-codes'
 import { injectable } from 'tsyringe'
 
 const DEFAULT_TIMEOUT = 10000
@@ -48,6 +49,29 @@ export class Client {
         throw e
       } else {
         throw new Error('Unexpected error searching book list', { cause: e })
+      }
+    }
+  }
+
+  public async getById(bookId: string): Promise<string> {
+    try {
+      const url = `/book/show/${bookId}.xml`
+      const params = {
+        key: this.apiKey,
+      }
+
+      const response = await this.axiosInstance.get<string>(url, { params })
+      return response.data
+    } catch (e: unknown) {
+      if (
+        axios.isAxiosError(e) &&
+        e.response?.status === StatusCodes.NOT_FOUND
+      ) {
+        throw new BookNotFoundError()
+      } else if (e instanceof Error) {
+        throw e
+      } else {
+        throw new Error('Unexpected error retrieving book', { cause: e })
       }
     }
   }

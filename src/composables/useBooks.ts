@@ -1,7 +1,8 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { booksService } from '@/services/books'
-import type { Pagination, Book } from '@shared/types'
+import type { Message, Pagination, Book } from '@shared/types'
+import { ApiError } from '@/exceptions'
 import {
   INITIAL_PAGE,
   PER_PAGE,
@@ -11,17 +12,21 @@ import {
 export function useBooks(): {
   isLoading: Ref<boolean>
   books: Ref<Book[]>
+  book: Ref<Book | undefined>
   loadBooks: (q: string, page: number) => Promise<void>
+  loadBook: (id: string) => Promise<void>
   pagination: Ref<Pagination>
+  getErrorMessages: (e: unknown) => Message[]
 } {
   const books = ref<Book[]>([])
+  const book = ref<Book>()
   const pagination = ref<Pagination>({
     perPage: PER_PAGE,
     currentPage: INITIAL_PAGE,
     totalPages: INITIAL_TOTAL_PAGES,
   })
 
-  const { fetch } = booksService()
+  const { fetch, fetchOne } = booksService()
 
   const isLoading = ref(false)
 
@@ -45,10 +50,35 @@ export function useBooks(): {
     }
   }
 
+  const loadBook = async (id: string): Promise<void> => {
+    if (isLoading.value) {
+      return
+    }
+    isLoading.value = true
+    try {
+      book.value = await fetchOne(id)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const getErrorMessages = (e: unknown): Message[] => {
+    if (e instanceof ApiError) {
+      return e.messages
+    } else if (e instanceof Error) {
+      return [{ text: e.message }]
+    } else {
+      return [{ text: 'Unknown error' }]
+    }
+  }
+
   return {
     isLoading,
     books,
+    book,
     loadBooks,
+    loadBook,
     pagination,
+    getErrorMessages,
   }
 }

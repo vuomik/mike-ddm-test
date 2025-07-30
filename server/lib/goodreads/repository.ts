@@ -34,6 +34,25 @@ const goodreadsSearchResponseSchema = z.object({
   }),
 })
 
+const goodreadsBookResponseSchema = z.object({
+  GoodreadsResponse: z.object({
+    book: z.object({
+      id: z.string(),
+      title: z.string(),
+      authors: z.object({
+        author: z.union([
+          z.object({ name: z.string() }),
+          z.array(z.object({ name: z.string() })),
+        ]),
+      }),
+      description: z.string().optional(),
+      image_url: z.string().optional(),
+      average_rating: z.coerce.number(),
+      publication_year: z.coerce.number(),
+    }),
+  }),
+})
+
 const parseXml = async <T>(
   xmlString: string,
   schema: z.ZodType<T>
@@ -97,5 +116,41 @@ export class Repository {
     })
 
     return { pagination, result: books }
+  }
+
+  public async getById(bookId: string): Promise<Book> {
+    const xmlResponse = await this.client.getById(bookId)
+    const parsedXml = await parseXml<
+      z.infer<typeof goodreadsBookResponseSchema>
+    >(xmlResponse, goodreadsBookResponseSchema)
+    const {
+      GoodreadsResponse: {
+        book: {
+          id,
+          title,
+          authors,
+          description,
+          image_url: imageUrl,
+          average_rating: averageRating,
+          publication_year: publicationYear,
+        },
+      },
+    } = parsedXml
+
+    const authorList = Array.isArray(authors.author)
+      ? authors.author.map((a) => a.name).join(', ')
+      : authors.author.name
+
+    const book: Book = {
+      id,
+      title,
+      author: authorList,
+      description:
+        description != null ? description.replace(/<[^>]*>/g, '') : '',
+      imageUrl,
+      averageRating,
+      publicationYear,
+    }
+    return book
   }
 }
