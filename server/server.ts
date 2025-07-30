@@ -7,6 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import routes from '@server/routes'
 import dotenv from 'dotenv'
+import { errorHandler } from './middleware/errorHandler'
 import { StatusCodes } from 'http-status-codes'
 import type { EntryServer } from '@/entry-server'
 
@@ -34,6 +35,8 @@ async function createServer(): Promise<void> {
   app.use(express.json())
 
   app.use('/api', routes)
+
+  app.use(errorHandler)
 
   if (process.env.NODE_ENV === 'production') {
     const fileName = fileURLToPath(import.meta.url)
