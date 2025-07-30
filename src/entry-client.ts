@@ -1,4 +1,4 @@
-import { createApp } from './main';
+import { createApp } from './main'
 
-const app = createApp();
-app.mount('#app');
+const app = createApp()
+app.mount('#app')

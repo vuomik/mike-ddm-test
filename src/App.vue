@@ -1,9 +1,8 @@
 <script setup lang="ts">
-
-import Home from './views/Home.vue';
-
+import NavigationBar from './components/NavigationBar.vue'
 </script>
 
 <template>
-    <Home />
+  <NavigationBar />
+  <router-view />
 </template>

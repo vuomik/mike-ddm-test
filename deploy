@@ -1,62 +1,77 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-STACK_NAME=dotdash-meredith-test-app
-REGION=us-east-1
+GITHUB_USERNAME="vuomik"
+GITHUB_REPO="mike-ddm-test"
+IMAGE_NAME="mike-ddm-app-prod"
+IMAGE_TAG="latest"
+FLY_APP_NAME="mike-ddm-app"
+GHCR_REGISTRY="ghcr.io"
+if [ -z "$GITHUB_TOKEN" ]; then
+  echo "ERROR: Please set your GitHub Personal Access Token in the GITHUB_TOKEN environment variable."
+  exit 1
+fi
+if [ -z "$GOODREADS_KEY" ]; then
+  echo "ERROR: Please set your Goodreads key in the GOODREADS_KEY environment variable."
+  exit 1
+fi
 
-echo "Deploying CloudFormation stack..."
-aws cloudformation deploy \
-  --template-file fargate.yml \
-  --stack-name $STACK_NAME \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --region $REGION
+if ! command -v flyctl &> /dev/null; then
+  echo "flyctl not found, installing..."
+  curl -s -L https://fly.io/install.sh | sh
+  export PATH="$HOME/.fly/bin:$PATH"
+  echo "flyctl installed successfully."
+fi
 
-echo "Waiting for stack creation to complete..."
-aws cloudformation wait stack-create-complete \
-  --stack-name $STACK_NAME \
-  --region $REGION
+# Full image name in GHCR
+FULL_IMAGE_NAME="$GHCR_REGISTRY/$GITHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
 
-echo "Fetching ECS cluster name..."
-CLUSTER_NAME=$(aws cloudformation describe-stack-resource \
-  --stack-name $STACK_NAME \
-  --logical-resource-id Cluster \
-  --region $REGION \
-  --query "StackResourceDetail.PhysicalResourceId" \
-  --output text)
+echo "Building Docker image with production stage..."
+docker build --target production -t $FULL_IMAGE_NAME .
 
-echo "Fetching ECS service name..."
-SERVICE_NAME=$(aws cloudformation describe-stack-resource \
-  --stack-name $STACK_NAME \
-  --logical-resource-id Service \
-  --region $REGION \
-  --query "StackResourceDetail.PhysicalResourceId" \
-  --output text)
+echo "Logging into GitHub Container Registry..."
+echo $GITHUB_TOKEN | docker login $GHCR_REGISTRY -u $GITHUB_USERNAME --password-stdin
 
-echo "Waiting for service to start a task..."
-aws ecs wait services-stable \
-  --cluster "$CLUSTER_NAME" \
-  --services "$SERVICE_NAME" \
-  --region $REGION
+echo "Pushing image to GitHub Container Registry..."
+docker push $FULL_IMAGE_NAME
 
-echo "Getting running task..."
-TASK_ARN=$(aws ecs list-tasks \
-  --cluster "$CLUSTER_NAME" \
-  --service-name "$SERVICE_NAME" \
-  --region $REGION \
-  --query 'taskArns[0]' \
-  --output text)
+echo "Deploying to Fly.io..."
+cat > fly.toml <<EOF
+app = "$FLY_APP_NAME"
 
-echo "Getting public IP..."
-ENI_ID=$(aws ecs describe-tasks \
-  --cluster "$CLUSTER_NAME" \
-  --tasks "$TASK_ARN" \
-  --region $REGION \
-  --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" \
-  --output text)
+[build]
+  image = "$FULL_IMAGE_NAME"
 
-PUBLIC_IP=$(aws ec2 describe-network-interfaces \
-  --network-interface-ids "$ENI_ID" \
-  --region $REGION \
-  --query "NetworkInterfaces[0].Association.PublicIp" \
-  --output text)
+[registry]
+  username = "$GITHUB_USERNAME"
+  password = "$GITHUB_TOKEN"
 
-echo "Your app is running at: http://$PUBLIC_IP:3000"
+[env]
+  NODE_ENV = "production"
+  PORT = 3000
+  GOODREADS_KEY = "$GOODREADS_KEY"
+
+[[services]]
+  internal_port = 3000
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    interval = 600000
+    timeout = 300000
+    grace_period = "30s"
+    restart_limit = 0
+EOF
+
+cat fly.toml
+
+flyctl deploy --config fly.toml
+
+echo "Deployment complete! Your app should be live at https://$FLY_APP_NAME.fly.dev"
