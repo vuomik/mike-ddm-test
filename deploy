@@ -1,0 +1,69 @@
+#!/bin/bash
+set -e
+
+if [ -f ".env.production" ]; then
+  set -a
+  source .env.production
+  set +a
+else
+  echo "ERROR: .env.production file not found.  Please refer to env.production.example to set one up."
+  exit 1
+fi
+
+FULL_IMAGE_NAME="$GHCR_REGISTRY/$GITHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
+
+echo "Building Docker image with production stage..."
+docker build --target production -t $FULL_IMAGE_NAME .
+
+echo "Logging into GitHub Container Registry..."
+echo $GITHUB_TOKEN | docker login $GHCR_REGISTRY -u $GITHUB_USERNAME --password-stdin
+
+echo "Pushing image to GitHub Container Registry..."
+docker push $FULL_IMAGE_NAME
+
+echo "Deploying to Fly.io..."
+cat > fly.toml <<EOF
+app = "$FLY_APP_NAME"
+
+[build]
+  image = "$FULL_IMAGE_NAME"
+
+[registry]
+  username = "$GITHUB_USERNAME"
+  password = "$GITHUB_TOKEN"
+
+[env]
+  NODE_ENV = "production"
+  PORT = 3000
+  GOODREADS_KEY = "$GOODREADS_KEY"
+
+[[services]]
+  internal_port = 3000
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    interval = 600000
+    timeout = 300000
+    grace_period = "30s"
+    restart_limit = 0
+EOF
+
+cat fly.toml
+
+echo "Deploying to Fly.io..."
+docker run --rm -it \
+  -v $PWD:/app \
+  -w /app \
+  -e FLY_API_TOKEN="$FLY_API_TOKEN" \
+  flyio/flyctl:latest \
+  deploy --config fly.toml
+
+echo "Deployment complete! Your app should be live at https://$FLY_APP_NAME.fly.dev"
