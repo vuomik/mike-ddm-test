@@ -7,6 +7,7 @@ import type { Router } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
 import BookSearch from '@/views/BookSearch.vue'
 import BookList from '@/components/BookList.vue'
+import BookDetails from '@/components/BookDetails.vue'
 
 export default function createRouter(): Router {
   return _createRouter({
@@ -28,6 +29,10 @@ export default function createRouter(): Router {
             name: 'Books',
             path: '',
             component: BookList,
+          },
+          {
+            path: ':id',
+            component: BookDetails,
           },
         ],
       },

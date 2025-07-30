@@ -9,7 +9,7 @@ import { INITIAL_PAGE } from '@server/utils/pages'
 const route = useRoute()
 const router = useRouter()
 
-const { books, isLoading, loadBooks, pagination } = useBooks()
+const { books, isLoading, loadBooks, pagination, getErrorMessages } = useBooks()
 
 const query = ref(z.coerce.string().default('').parse(route.query.q))
 const page = ref(
@@ -24,7 +24,7 @@ const onSearch = async (): Promise<void> => {
     await loadBooks(query.value, page.value)
     await updateUrl()
   } catch (e: unknown) {
-    emit('error', [{ text: 'An error has occured' }])
+    emit('error', getErrorMessages(e))
   }
 }
 
@@ -52,6 +52,10 @@ const prevPage = async (): Promise<void> => {
     await loadBooks(query.value, page.value)
     await updateUrl()
   }
+}
+
+const selectBook = async (id: string): Promise<void> => {
+  await router.push({ path: `/books/${id}` })
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-magic-numbers -- First page is 1 */
@@ -115,7 +119,8 @@ onMounted(async () => {
         <div
           v-for="book in books"
           :key="book.id"
-          class="p-4 border rounded hover:shadow transition"
+          class="p-4 border rounded hover:shadow cursor-pointer transition"
+          @click="selectBook(book.id)"
         >
           <h3 class="text-lg font-semibold">{{ book.title }}</h3>
           <p class="text-sm text-gray-600">by {{ book.author }}</p>

@@ -40,6 +40,22 @@ describe('Repository', () => {
     })
   })
 
+  it('parses book details correctly', async () => {
+    const xml = await fixture('book-response.xml')
+    mockClient.getById.mockResolvedValue(xml)
+    const book = await repo.getById('123')
+
+    expect(book).toEqual({
+      id: '123',
+      title: 'Test Book',
+      author: 'Author Name',
+      description: 'This is a test description',
+      imageUrl: 'http://example.com/image.jpg',
+      averageRating: 4.2,
+      publicationYear: 2020,
+    })
+  })
+
   it('throws on XML that does not correspond to our schema', async () => {
     const xml = await fixture('bad-schema.xml')
     mockClient.search.mockResolvedValue(xml)
