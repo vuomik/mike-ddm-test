@@ -1,3 +1,3 @@
 <template>
-  <div>Hello DDM from Vue!</div>
+  <div class="text-3xl">Hello DDM from Vue with Tailwind!</div>
 </template>
