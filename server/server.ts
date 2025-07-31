@@ -1,5 +1,15 @@
+import 'reflect-metadata'
+import './di'
+
 import express from 'express'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import routes from '@server/routes'
 import dotenv from 'dotenv'
+import { errorHandler } from './middleware/errorHandler'
+import { StatusCodes } from 'http-status-codes'
+import type { EntryServer } from '@/entry-server'
 
 dotenv.config()
 
@@ -24,14 +34,79 @@ async function createServer(): Promise<void> {
 
   app.use(express.json())
 
-  const { createServer: createViteServer } = await import('vite')
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'custom',
-  })
-  app.use(vite.middlewares)
+  app.use('/api', routes)
 
-  app.get('/', (req, res) => res.send('Hello DDM!'))
+  app.use(errorHandler)
+
+  if (process.env.NODE_ENV === 'production') {
+    const fileName = fileURLToPath(import.meta.url)
+    const dirName = path.dirname(fileName)
+    const root = path.resolve(dirName, '..')
+
+    const template = fs.readFileSync(
+      path.resolve(root, 'client/index.html'),
+      'utf-8'
+    )
+
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- The function signature is safe */
+    const { render } = (await import(
+      path.resolve(root, 'ssr/entry-server.js')
+    )) as EntryServer
+
+    app.use(express.static(path.join(dirName, '../client')))
+
+    app.get('*', async (req, res) => {
+      try {
+        const html = await render()
+        const finalHtml = template.replace(`<!--app-html-->`, html)
+        res
+          .status(StatusCodes.OK)
+          .set({ 'Content-Type': 'text/html' })
+          .end(finalHtml)
+      } catch (e: unknown) {
+        /* eslint-disable-next-line no-console -- Errors go to logs */
+        console.error(`SSR error: ${e instanceof Error ? e.message : ''}`, e)
+        res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .end('Internal Server Error')
+      }
+    })
+  } else {
+    const { createServer: createViteServer } = await import('vite')
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+    })
+    app.use(vite.middlewares)
+
+    app.get('*', async (req, res) => {
+      try {
+        const { originalUrl: url } = req
+        const template = fs.readFileSync(path.resolve('index.html'), 'utf-8')
+        const transformedTemplate = await vite.transformIndexHtml(url, template)
+
+        /* eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Force the any parameter to be allowed since we know what it is */
+        const { render } = (await vite.ssrLoadModule(
+          '/src/entry-server.ts'
+        )) as EntryServer
+
+        const html = await render()
+        res
+          .status(StatusCodes.OK)
+          .set({ 'Content-Type': 'text/html' })
+          .end(transformedTemplate.replace(`<!--app-html-->`, html))
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          vite.ssrFixStacktrace(e)
+          /* eslint-disable-next-line no-console -- Errors go to logs */
+          console.error(`Vite error: ${e.message}`)
+        }
+        res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .end('Internal Server Error')
+      }
+    })
+  }
 
   /* eslint-disable-next-line  @typescript-eslint/no-non-null-assertion -- Required in .env file to run */
   const port = parseInt(process.env.PORT!, 10)

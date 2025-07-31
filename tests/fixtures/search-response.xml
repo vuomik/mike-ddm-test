@@ -1,0 +1,26 @@
+<GoodreadsResponse>
+  <search>
+    <results-start>1</results-start>
+    <total-results>2</total-results>
+    <results>
+      <work>
+        <best_book>
+          <id type="integer">123</id>
+          <title>Test Book</title>
+          <author>
+            <name>Author Name</name>
+          </author>
+        </best_book>
+      </work>
+      <work>
+        <best_book>
+          <id type="integer">456</id>
+          <title>Another Book</title>
+          <author>
+            <name>Second Author</name>
+          </author>
+        </best_book>
+      </work>
+    </results>
+  </search>
+</GoodreadsResponse>

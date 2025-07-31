@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "vue"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -21,6 +21,6 @@
       "@shared/*": ["shared/*"]
     }
   },
-  "include": ["src/**/*", "server/**/*.ts", "vite.config.ts", "eslint.config.ts"],
+  "include": ["src/**/*", "server/**/*.ts", "tests/**/*.ts", "vite.config.ts", "eslint.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules"]
 }
